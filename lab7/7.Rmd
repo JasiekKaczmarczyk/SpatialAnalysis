@@ -1,0 +1,53 @@
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(spatstat)
+```
+
+```{r}
+points1 <- rpoispp(1, win = disc(10))
+points2 <- rStrauss(1, gamma =0.5 , W = disc(10))
+# punkty sa rownomiernie rozmieszczone w oknie
+points3 <- rThomas(kappa = 0.1, scale = 1, mu=7, win = disc(10))
+# punkty maja tendencje do grupowania w klastrach
+
+plot(points1)
+plot(points2)
+plot(points3)
+
+# parametry
+# points1: lamda=1
+# points2: beta=1, gamma=0.5
+# points3: kappa=0.1, mu=7, scale=1
+```
+
+```{r}
+hist(nndist(points1))
+hist(nndist(points2))
+hist(nndist(points3))
+```
+
+```{r}
+gp1 <- Gest(points1, correction="km")
+gp2 <- Gest(points2, correction="km")
+gp3 <- Gest(points3, correction="km")
+```
+
+```{r}
+plot(gp1)
+plot(gp2)
+plot(gp3)
+# krzywe przedstawiaja prawdopodobienstwo ze punkt ma najblizszego sasiada w odleglosci r
+```
+
+```{r}
+plot(Kest(points1, correction="border"), .~r)
+plot(Kest(points2, correction="border"), .~r)
+plot(Kest(points3, correction="border"), .~r)
+```
+
+```{r}
+plot(distmap(points1))
+plot(distmap(points2))
+plot(distmap(points3))
+```
