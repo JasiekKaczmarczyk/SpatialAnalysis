@@ -1,0 +1,65 @@
+```{r}
+library(dplyr)
+library(ggplot2)
+library(sp)
+library(base)
+```
+#iad.projekty@gmail.com
+
+#a przypuszczenie dotyczace rozkladu h0 -> p = p0 h1 -> p <> p0
+
+#b dopuszczalne ryzyko popelnienia bledu
+
+#c rozklad w ksztalcie dzwonu, jeśli jakaś wielkość jest sumą lub średnią bardzo wielu drobnych losowych czynników, to niezależnie od rozkładu każdego z tych czynników jej rozkład będzie zbliżony do normalnego
+
+#d funkcja wyznaczajaca w sposob jednoznaczny rozklad prawdopodobienstwa
+
+```{r}
+x=seq(-2,2,0.01)
+y_dnorm=dnorm(x)
+df_dnorm=data.frame(x,y_dnorm)
+ggplot(df_dnorm, aes(x,y_dnorm)) + geom_line()
+
+```
+
+```{r}
+y_pnorm=pnorm(x)
+df_pnorm=data.frame(x,y_pnorm)
+ggplot(df_pnorm, aes(x,y_pnorm)) + geom_line()
+```
+
+```{r}
+df <- readRDS("ca_geo.rds")
+class(df)
+df <- data.frame(df)
+```
+
+```{r}
+base::min(df$pH, na.rm=TRUE)
+base::max(df$pH, na.rm=TRUE)
+base::mean(df$pH, na.rm=TRUE)
+sd(df$pH, na.rm=TRUE)
+IQR(df$pH, na.rm=TRUE)
+```
+
+```{r}
+ggplot(df, aes(pH)) +geom_histogram(na.rm=TRUE)
+```
+
+```{r}
+density(df$pH, na.rm=TRUE)
+```
+
+```{r}
+ggplot(df, aes(pH)) +geom_boxplot(na.rm=TRUE) + stat_boxplot(coef = 1.5, na.rm=TRUE)
+```
+
+```{r}
+df$pH<-scale(df$pH)
+ggplot(df, aes(pH)) +geom_histogram(na.rm=TRUE)
+```
+
+```{r}
+shapiro.test(df$pH)
+#p-value < 5% - hipoteza odrzucona
+```
