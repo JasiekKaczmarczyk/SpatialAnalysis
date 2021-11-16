@@ -1,0 +1,46 @@
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(spatstat)
+```
+
+```{r}
+rpoints <- data.frame(runif(200, min = 0, max = 1), runif(200, min=0, max=2))
+colnames(rpoints) <- c("x", "y")
+```
+
+```{r}
+ggplot(rpoints, aes(x, y)) + geom_point()
+```
+
+```{r}
+ggplot(rpoints, aes(x, y)) + geom_point()+coord_fixed()
+```
+
+```{r}
+p_range <- runif(300, min = 0, max = 100)
+p_angle <- runif(300, min = 0, max = 2*pi)
+
+rpoints2 <- data.frame(sqrt(p_range)*cos(p_angle), sqrt(p_range)*sin(p_angle))
+colnames(rpoints2) <- c("x", "y")
+```
+
+```{r}
+plot(disc(radius = 10))
+points(rpoints2$x, rpoints2$y)
+```
+
+```{r}
+ppp1 <- ppp(rpoints2$x, rpoints2$y, window = disc(radius = 10))
+quadrat.test(ppp1)
+
+#wartosc p-value nie pozwala odrzucic hipoteze zerowa
+```
+
+```{r}
+d1 <- disc(radius = 10)
+
+rpoispp(lambda = 500/area(d1), win=d1)
+
+#507 punktow
+```
