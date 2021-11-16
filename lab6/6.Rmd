@@ -1,0 +1,81 @@
+```{r}
+library(spatstat)
+library(tidyverse)
+library(ggplot2)
+library(ggpmisc)
+```
+
+```{r}
+data1 <- murchison
+```
+
+```{r}
+ggplot() + 
+  geom_point(aes(data1$gold$x, data1$gold$y), shape=10, color="red") + 
+  geom_point(aes(data1$faults$ends$x0, data1$faults$ends$y0), shape=20, color="green")+
+  geom_point(aes(data1$greenstone$xrange, data1$greenstone$yrange), shape=12, color="blue")+
+  xlab("X")+ylab("Y")
+```
+
+```{r}
+summary(data1$gold)
+```
+
+```{r}
+ggplot() + 
+  geom_point(aes(data1$gold$x, data1$gold$y), shape=10, color="red") + xlab("X")+ylab("Y")
+```
+
+```{r}
+qX <- quadratcount(data1$gold, 5, 5)
+
+ggplot() + 
+  geom_point(aes(data1$gold$x, data1$gold$y), shape=10, color="red") + 
+  xlab("X")+ylab("Y")
+```
+
+```{r}
+quadrat.test(data1$gold, 5, 5)
+# p-value < 2.2e-16 - odrzucamy hipoteze zerowa
+```
+
+```{r}
+d1<-density(data1$gold)
+```
+
+```{r}
+persp(d1)
+contour(d1)
+```
+
+```{r}
+ggplot() + 
+  geom_point(aes(data1$gold$x, data1$gold$y), shape=10, color="red") + 
+  geom_point(aes(data1$faults$ends$x0, data1$faults$ends$y0), shape=20, color="green")+
+  xlab("X")+ylab("Y")
+```
+
+```{r}
+dm1 <- distmap(data1$faults)
+plot(dm1)
+```
+
+```{r}
+plot(rhohat(data1$gold, dm1))
+```
+
+```{r}
+distfun(data1$faults)
+```
+
+```{r}
+df1<-distfun(data1$faults)
+```
+
+```{r}
+df1(400000,7000000)
+```
+
+```{r}
+plot(df1)
+```
