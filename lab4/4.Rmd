@@ -1,0 +1,46 @@
+```{r}
+library(dplyr)
+library(ggplot2)
+library(sp)
+library(base)
+library(MASS)
+library(ggpubr)
+```
+
+
+```{r}
+df <- cats
+ggplot(df, aes(Bwt, Hwt)) +geom_point()
+
+```
+
+```{r}
+sum((df$Bwt-mean(df$Bwt))*(df$Hwt-mean(df$Hwt)))/(nrow(df)-1)
+```
+
+```{r}
+cov(df$Bwt, df$Hwt, method="pearson")
+cor(df$Bwt, df$Hwt, method="pearson")
+```
+
+```{r}
+#Wspolczynnik korelacji mowi jak bardzo wartosci sa zblizone do linii trendu, nie mowi nic o nachyleniu
+#jesli korelacja wynosi 0 tzn ze zmienne sa niezalezne, w przypadku korelacji 0.95 wystepuje bardzo silna korelacja
+```
+
+```{r}
+cor.test(df$Bwt, df$Hwt, method="pearson")
+```
+
+```{r}
+cats.mod <- lm(Hwt~Bwt, data=df)
+```
+
+```{r}
+ggscatter(df, "Bwt", "Hwt", cor.method = "pearson", add = "reg.line", conf.int = TRUE, cor.coef = TRUE)
+```
+
+```{r}
+
+
+```
