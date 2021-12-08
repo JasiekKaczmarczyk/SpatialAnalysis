@@ -1,0 +1,180 @@
+# Projekt: Wykroczenia w Krakowie
+
+---
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+## Biblioteki
+
+```{r message=FALSE}
+library(spatstat)
+library(dbscan)
+library(tidyverse)
+library(raster)
+library(ggplot2)
+library(sp)
+```
+
+## Preprocessing
+
+### Zmiana projekcji i zapisanie danych
+
+```{r}
+data <- read.csv2("./dane/zestaw4.csv", colClasses = c("numeric", "numeric"))
+colnames(data) <- c("Lon", "Lat")
+
+coord <- SpatialPoints(cbind(data$Lon, data$Lat), proj4string = CRS("+proj=longlat"))
+
+coordUTM <- spTransform(coord, CRS("+init=epsg:2178"))
+
+dataUTM <- data.frame(coordUTM)
+colnames(dataUTM) <- c("Lon", "Lat")
+write.csv2(dataUTM, "zeszyt4_edit.csv", row.names = F)
+```
+
+### Wczytanie danych
+
+```{r}
+zeszyt4 <- read.csv2("./zeszyt4_edit.csv")
+osiedla <- shapefile("./dane/osiedla.shp")
+```
+
+## ALGORYTMY:
+
+DBSCAN - algorytm grupowania gęstościowego, algorytm identyfikuje rdzenie klastrów jako punkty w sąsiedztwie których znajduje się co najmniej tyle punktów ile wynosi wartość graniczna
+
+Zalety:
+
+-   Radzi sobie z wartościami odstającymi i szumem
+
+Wady:
+
+-   Wrażliwy na parametry gęstości
+
+-   Słabo radzi sobie przy zmiennej gęstości
+
+HDBSCAN - rozwinięcie DBSCAN, do zdefiniowanych rdzeni dolączane są punkty pozostające w bliskiej odleglości od któregokolwiek z punktów rdzenia, które w sumie tworzą klaster.
+
+Zalety:
+
+-   Działa lepiej od DBSCAN przy danych o zmiennej gęstości
+
+Wady:
+
+-   Przez wysoką złożoność operacji HDBSCAN jest trudniejszy w analizie
+
+OPTICS - algorytm grupowania gęstościowego podobny do DBSCAN, ale mający nad nim przewagę że lepiej wykrywa klastry w danych o różnej gęstości
+
+Zalety:
+
+-   Nie wymaga parametrów gęstości
+
+Wady:
+
+-   Tworzy tylko kolejność klastrów
+
+-   Nie radzi sobie z wielowymiarowymi danymi
+
+## MAPA
+
+```{r}
+map <- ggplot() + 
+  geom_polygon(data=osiedla, aes(x=long, y=lat, group=group), show.legend = F, color="white", fill="darkgrey") + coord_fixed() + ggtitle("Wykroczenia w Krakowie")
+
+map + geom_point(data=zeszyt4, aes(x=Lon, y=Lat), alpha=0.5)
+```
+
+## DBSCAN
+
+#### Parametry: eps=10, minPts=10
+
+```{r}
+dbscan_res1 <- dbscan(zeszyt4, eps=10, minPts = 10)
+map + geom_point(data=zeszyt4, aes(x=Lon, y=Lat, color = dbscan_res1$cluster), alpha=0.5) + scale_color_viridis_c(name="Klastry")
+```
+
+Przy eps=10 klastrow jest niewiele
+
+#### Parametry: eps=50, minPts=10
+
+```{r}
+dbscan_res2 <- dbscan(zeszyt4, eps=50, minPts = 10)
+map + geom_point(data=zeszyt4, aes(x=Lon, y=Lat, color = dbscan_res2$cluster), alpha=0.5) + scale_color_viridis_c(name="Klastry")
+```
+
+Przy esp=50 zaczynaja pojawiać się klastry w okolicach centrum
+
+#### Parametry: eps=200, minPts=10
+
+```{r}
+dbscan_res3 <- dbscan(zeszyt4, eps=200, minPts = 10)
+map + geom_point(data=zeszyt4, aes(x=Lon, y=Lat, color = dbscan_res3$cluster), alpha=0.5) + scale_color_viridis_c(name="Klastry")
+```
+
+Przy esp=200 w centrum i okolicach Mistrzejowic widać wiele klastrów
+
+## HDBSCAN
+
+#### Parametry: minPoints=10
+
+```{r}
+hdbscan_res1 <- hdbscan(zeszyt4, minPts = 10)
+map + geom_point(data=zeszyt4, aes(x=Lon, y=Lat, color = hdbscan_res1$cluster), alpha=0.5) + scale_color_viridis_c(name="Klastry")
+```
+
+Przy minPoints=10 widac jedynie 3 klastry, widac ze intensywnosc wykroczen dominuje w centrum miasta
+
+#### Parametry: minPoints=50
+
+```{r}
+hdbscan_res2 <- hdbscan(zeszyt4, minPts = 50)
+map + geom_point(data=zeszyt4, aes(x=Lon, y=Lat, color = hdbscan_res2$cluster), alpha=0.5) + scale_color_viridis_c(name="Klastry")
+```
+
+Przy minPts=50, tak jak wyszlo przy dbscan dominuja Centrum i Mistrzejowice
+
+#### Parametry: minPts = 100
+
+```{r}
+hdbscan_res3 <- hdbscan(zeszyt4, minPts = 100)
+map + geom_point(data=zeszyt4, aes(x=Lon, y=Lat, color = hdbscan_res3$cluster), alpha=0.5) + scale_color_viridis_c(name="Klastry")
+```
+
+Przy minPts=100 roznice sa niewielkie wzgledem minPts=50
+
+## OPTICS
+
+### Parametry: minPts=10, eps_cl=1
+
+```{r}
+optics_res1 <- optics(zeszyt4, minPts = 10)
+optics_cl1 <- extractDBSCAN(optics_res1, eps_cl=1)
+map + geom_point(data=zeszyt4, aes(x=Lon, y=Lat, color = optics_cl1$cluster), alpha=0.5) + scale_color_viridis_c(name="Klastry")
+```
+
+#### Parametry: minPts=10, eps_cl=500
+
+```{r}
+optics_res2 <- optics(zeszyt4, minPts = 10)
+optics_cl2 <- extractDBSCAN(optics_res2, eps_cl=500)
+map + geom_point(data=zeszyt4, aes(x=Lon, y=Lat, color = optics_cl2$cluster), alpha=0.5) + scale_color_viridis_c(name="Klastry")
+```
+
+Widac klastry w okolicach Centrum, Mistrzejowic oraz okolic Kurdwanowa
+
+#### Parametry: minPts=10, eps_cl=700
+
+```{r}
+optics_res3 <- optics(zeszyt4, minPts = 10)
+optics_cl3 <- extractDBSCAN(optics_res3, eps_cl=700)
+map + geom_point(data=zeszyt4, aes(x=Lon, y=Lat, color = optics_cl3$cluster), alpha=0.5) + scale_color_viridis_c(name="Klastry")
+```
+
+Wynik podobny do poprzedniego przy eps_cl=500.
+
+## Wnioski:
+
+Na podstawie użytych algorytmów możemy stwierdzić że najlepszym działaniem wykazał się OPTICS z parametrami minPts=10 i eps_cl=500, ponieważ dane mają mocno zróżnicowaną intensywność. OPTICS wydzielił 2 większe klastry w Centrum i okolicach Mistrzejowic, a także kilka mniejszych w okolicach Woli Duchackiej, Łagiewnik i Ruczaju.
